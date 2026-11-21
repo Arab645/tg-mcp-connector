@@ -1034,9 +1034,6 @@ class NotionSink:
         }
         existing = await self._find_page(key)
         if existing:
-            await self._http.patch(f"/v1/pages/{existing}",
-                                   headers=self._headers, json={"properties": props}).raise_for_status() \
-                if False else None
             r = await self._http.patch(f"/v1/pages/{existing}",
                                         headers=self._headers, json={"properties": props})
             r.raise_for_status()
