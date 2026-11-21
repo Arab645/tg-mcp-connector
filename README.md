@@ -67,6 +67,12 @@ Use absolute paths. Settings are read from `.env` in the *current working direct
 
 On startup the server opens the database, runs migrations, registers the `WATCHLIST_DEFAULT` chats, connects to Telegram with the saved session, and starts the scheduler (which runs one sync immediately, then every `SYNC_INTERVAL_MIN` minutes).
 
+## Daily digest
+
+After per-chat summaries, each scheduler tick builds a cross-chat digest for `today` and `yesterday` (UTC). `summarize/digest.py` collects the `done` per-chat summaries for the date, hashes their `(chat_id, last_covered_id)` pairs, and calls Claude once to write a short Markdown brief (what happened, decisions, action items, open questions, links). The result is stored in the `daily_digests` table. If the hash matches the stored digest, nothing is regenerated, so idle ticks cost nothing; a new or advanced per-chat summary changes the hash and triggers a rewrite.
+
+When Notion is configured, the digest is upserted into the same database as the per-chat pages, keyed by `Key = "digest:<date>"` with `ChatId = 0` as the digest sentinel. Read it with `get_digest` and `list_digests`.
+
 ## Data flow
 
 ```
@@ -119,6 +125,8 @@ Module map (`src/tg_mcp/`):
 | `sync_now` | `chat_ids?` | Runs the sync engine now for the given chats (default: watched). Returns per-chat inserted counts and cursors. |
 | `get_summary` | `chat_id`, `date` (YYYY-MM-DD) | One day's summary row (JSON content, status, Notion page id, token counts), or null. |
 | `list_summaries` | `date_from`, `date_to`, `chat_ids?` | Summary rows in a date range, newest first. |
+| `get_digest` | `date` (YYYY-MM-DD) | The cross-chat daily digest row (Markdown content, status, covered hash, Notion page id, token counts), or null. |
+| `list_digests` | `date_from`, `date_to` | Digest rows in a date range, newest first. |
 | `set_watchlist` | `chat_ids`, `mode?: "replace"\|"add"\|"remove"` (replace) | Sets which chats sync. Unknown chats are looked up on Telegram and stored unwatched. Returns the watched list. |
 | `get_status` | none | Last run (with per-chat stats JSON and error), all sync cursors, and summaries not in `done` status. |
 
