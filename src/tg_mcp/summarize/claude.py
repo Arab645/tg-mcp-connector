@@ -31,11 +31,11 @@ class AnthropicClaude:
             data = json.loads(text)
         except json.JSONDecodeError:
             start = text.find("{"); end = text.rfind("}")
-            empty = {"topics":[], "decisions":[], "action_items":[],
-                     "open_questions":[], "links":[], "participants":[]}
             try:
-                data = json.loads(text[start:end+1]) if start >= 0 and end > start else empty
+                if start < 0 or end <= start:
+                    raise json.JSONDecodeError("no object", text, 0)
+                data = json.loads(text[start:end+1])
             except json.JSONDecodeError:
-                data = empty
+                raise ValueError("Claude returned unparseable JSON: " + text[:200]) from None
         u = resp.usage
         return data, int(u.input_tokens), int(u.output_tokens)
