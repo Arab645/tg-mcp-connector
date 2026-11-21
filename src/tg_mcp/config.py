@@ -1,4 +1,5 @@
 # src/tg_mcp/config.py
+import json
 from pathlib import Path
 from typing import Annotated, List
 from pydantic import Field, field_validator
@@ -23,7 +24,10 @@ class Settings(BaseSettings):
     @classmethod
     def _split_csv(cls, v):
         if isinstance(v, str):
-            return [int(x) for x in v.split(",") if x.strip()]
+            s = v.strip()
+            if s.startswith("["):
+                return [int(x) for x in json.loads(s)]
+            return [int(x) for x in s.split(",") if x.strip()]
         return v
 
     @field_validator("tg_session_path", "tg_mcp_db_path")
