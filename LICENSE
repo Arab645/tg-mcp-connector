@@ -1,0 +1,28 @@
+Proprietary Software — Evaluation License
+
+Copyright (c) 2026 Danylo Yasinski. All rights reserved.
+
+This source code and its accompanying documentation (together, the "Software")
+are provided solely for the purpose of evaluating the author's engineering
+work in the context of a specific hiring process at HOLYWATER TECH.
+
+Permitted use:
+  - Reading and reviewing the Software to evaluate the author's suitability
+    for a role.
+  - Running the Software locally in a non-production environment for the
+    sole purpose of such evaluation.
+
+Prohibited use, absent prior written permission from the author:
+  - Copying, forking, modifying, redistributing, publishing, or sublicensing
+    the Software or any substantial portion of it.
+  - Incorporating the Software, in whole or in part, into any other product,
+    service, internal tool, or codebase.
+  - Using the Software or any derivative work in production or for commercial
+    purposes.
+  - Removing or altering this notice.
+
+No rights are granted by implication, estoppel, or otherwise. This is not an
+open source license. The Software is provided "AS IS", without warranty of
+any kind. The author retains all rights not expressly granted here.
+
+To request a different license, contact the author directly.
