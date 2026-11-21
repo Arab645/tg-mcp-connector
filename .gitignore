@@ -24,6 +24,9 @@ venv/
 .lock
 data/
 
+# SDD scratch workspace (ledger, briefs, review packages)
+.superpowers/
+
 # OS / editor
 .DS_Store
 .idea/
