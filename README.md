@@ -1,5 +1,7 @@
 # tg-mcp-connector
 
+> **Submission notice.** This repository is a test-task submission by **Danylo Yasinski** for HOLYWATER TECH, prepared 2026-11-21. It is shared under a proprietary evaluation-only license — see [`LICENSE`](LICENSE). No rights are granted for reuse, redistribution, or incorporation into other products; access is granted solely to evaluate the author's work for the role under discussion.
+
 A Telegram connector that pulls work chats (groups and DMs) into a local store, produces a short daily LLM summary per chat, and exposes everything as an MCP server so Claude Desktop or Claude Code can browse, sync, send, and read summaries.
 
 Built as a test task for HOLYWATER TECH. The full design (goals, schema, idempotency argument, trade-offs) is in [`docs/superpowers/specs/2026-11-21-telegram-mcp-connector-design.md`](docs/superpowers/specs/2026-11-21-telegram-mcp-connector-design.md). This README describes what is actually built; where the code differs from the original spec, the difference is called out under [Limits](#limits).
