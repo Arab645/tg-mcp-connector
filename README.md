@@ -76,7 +76,7 @@ Telegram (MTProto)
 telegram.iter_new_messages(chat_id, min_id=cursor)
     │
     ▼
-sync.engine: one txn per chat
+sync.engine: one insert txn per chat, then cursor update
     ├─ INSERT OR IGNORE INTO messages (dedup on (chat_id, message_id))
     └─ UPDATE sync_cursors SET last_message_id = max_id
     │
@@ -134,6 +134,7 @@ The spec has the full reasoning; the short version:
 - **Noise filter before the LLM.** Stickers, service messages, acknowledgements ("ok", "спс", "+1"), and emoji-only messages are dropped in code, which saves tokens and makes the drop count auditable. The prompt also tells the model to ignore chit-chat.
 - **Structured JSON output.** The model returns topics, decisions, action items with owners, open questions, and links. Notion rendering is a separate step, so the same data can serve MCP clients and the sink.
 - **Notion failure does not block sync.** Sync and summarization are separate steps, and a Notion write happens after the LLM call. A failed Notion write marks that day's summary `error`; messages and cursors are unaffected, and the next run retries the day.
+- **Insert and cursor are not one transaction.** `insert_messages` commits its own `BEGIN IMMEDIATE` transaction, and `set_cursor` is a separate autocommit statement. Safety holds because a crash between them re-fetches the batch on the next run, and the `(chat_id, message_id)` primary key absorbs the duplicates.
 - **Per-chat error isolation.** One chat failing (for example, a flood wait) is recorded in `runs.stats_json` and does not stop the others.
 
 ## Trade-offs
@@ -172,7 +173,7 @@ With `.env` filled in and `tg-mcp-login` done:
 ./scripts/demo.sh
 ```
 
-The script connects to the real Telegram session, watches the chats in `WATCHLIST_DEFAULT` (with their real titles), and calls the same `sync_now` code the MCP tool uses **twice in a row**. It prints the inserted counts for each pass and asserts that the **second pass inserts 0 rows**, which shows the sync is idempotent: the cursor and the primary key prevent duplicates on a repeat run.
+The script connects to the real Telegram session, watches the chats in `WATCHLIST_DEFAULT` (with their real titles), and calls the same `sync_now` code the MCP tool uses **twice in a row**. It prints the inserted counts for each pass and asserts that the **second pass inserts 0 rows**, which shows the sync is idempotent: the cursor and the primary key prevent duplicates on a repeat run. A per-chat error in either pass (for example, an auth or network failure) fails the run with exit 1, so a dead connection cannot pass as "0 inserted".
 
 If a message arrives in a watched chat between the two passes, the second count is non-zero. That is new data, not a duplicate, and the assertion will fail. Run the demo on a quiet watchlist, or read the per-chat counts it prints.
 

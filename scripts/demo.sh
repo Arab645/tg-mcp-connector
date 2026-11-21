@@ -48,6 +48,21 @@ async def main():
         "second_run_per_chat": {str(k): v["inserted"] for k, v in second["per_chat"].items()},
     }
     print(json.dumps(report, indent=2))
+
+    # run_sync records per-chat failures instead of raising, so a dead
+    # connection would otherwise show up as 0 inserts and a false pass.
+    failed = False
+    for label, run in (("first", first), ("second", second)):
+        for cid, res in run["per_chat"].items():
+            if res["error"] is not None:
+                failed = True
+                print(f"{label} pass, chat {cid}: {res['error']}")
+    if failed:
+        raise SystemExit(1)
+
+    if first["total_inserted"] == 0:
+        print("note: watchlist already fully synced; idempotency check still valid")
+
     # A chat that receives a message between the two passes will make this
     # non-zero; that is new data, not a duplicate. Run on a quiet watchlist.
     assert second["total_inserted"] == 0, \
