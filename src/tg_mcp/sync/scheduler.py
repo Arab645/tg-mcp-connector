@@ -11,7 +11,7 @@ def _today_and_yesterday() -> list[str]:
 
 async def tick(ctx, dates: list[str] | None = None) -> dict:
     dates = dates or _today_and_yesterday()
-    sync_report = await run_sync(ctx.conn, ctx.tg)
+    sync_report = await run_sync(ctx.conn, ctx.tg, max_backfill_days=getattr(ctx.settings, "max_backfill_days", None))
     summaries = await run_pending_summaries(
         ctx.conn, ctx.claude, ctx.notion, ctx.settings.summary_model, dates)
     return {"sync": sync_report, "summaries": summaries}

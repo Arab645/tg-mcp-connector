@@ -71,3 +71,16 @@ async def test_error_in_one_chat_does_not_block_others(mem_db):
     res = await run_sync(mem_db, fake)
     assert res["per_chat"][1]["error"] is not None
     assert res["per_chat"][2]["inserted"] == 1
+
+@pytest.mark.asyncio
+async def test_drain_loop_pulls_all_pages_when_more_than_batch_limit(mem_db):
+    db.migrate(mem_db)
+    db.upsert_chat(mem_db, 1, "A", "dm", True)
+    fake = FakeTelegram(
+        chats=[{"chat_id":1,"title":"A","kind":"dm"}],
+        messages={1:[_m(1,i) for i in range(1,1501)]})
+    res = await run_sync(mem_db, fake, batch_limit=500)
+    assert res["total_inserted"] == 1500
+    assert db.get_cursor(mem_db, 1) == 1500
+    res2 = await run_sync(mem_db, fake, batch_limit=500)
+    assert res2["total_inserted"] == 0

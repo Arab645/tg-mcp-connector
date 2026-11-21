@@ -1,5 +1,6 @@
 # src/tg_mcp/telegram/client.py
 from __future__ import annotations
+from datetime import datetime
 import json
 from pathlib import Path
 from typing import AsyncIterator, Literal, Protocol, TypedDict, runtime_checkable
@@ -24,7 +25,8 @@ class MessageDTO(TypedDict):
 class TelegramPort(Protocol):
     async def list_chats(self) -> list[ChatInfo]: ...
     async def iter_new_messages(self, chat_id: int, min_id: int | None,
-                                limit: int = 500) -> AsyncIterator[MessageDTO]: ...
+                                limit: int = 500,
+                                offset_date: datetime | None = None) -> AsyncIterator[MessageDTO]: ...
     async def send_message(self, chat_id: int, text: str) -> int: ...
 
 class FakeTelegram:
@@ -36,10 +38,15 @@ class FakeTelegram:
     async def list_chats(self) -> list[ChatInfo]:
         return list(self._chats)
 
-    async def iter_new_messages(self, chat_id, min_id, limit=500):
+    async def iter_new_messages(self, chat_id, min_id, limit=500, offset_date=None):
+        # offset_date is ignored by the fake (no date-bounded backfill).
+        n = 0
         for m in sorted(self._messages.get(chat_id, []), key=lambda x: x["message_id"]):
             if min_id is not None and m["message_id"] <= min_id:
                 continue
+            if n >= limit:
+                return
+            n += 1
             yield m
 
     async def send_message(self, chat_id, text) -> int:
@@ -75,8 +82,10 @@ class TelethonTelegram:
             out.append({"chat_id": int(d.id), "title": d.name or "(no title)", "kind": kind})
         return out
 
-    async def iter_new_messages(self, chat_id, min_id, limit=500):
+    async def iter_new_messages(self, chat_id, min_id, limit=500, offset_date=None):
         kwargs = {"limit": limit, "reverse": True}
+        if offset_date is not None:
+            kwargs["offset_date"] = offset_date
         if min_id is not None:
             kwargs["min_id"] = min_id
         async for msg in self._client.iter_messages(chat_id, **kwargs):

@@ -35,7 +35,9 @@ async def send_message_tool(ctx: AppContext, chat_id: int, text: str) -> dict:
     return {"chat_id": chat_id, "message_id": mid}
 
 async def sync_now_tool(ctx: AppContext, chat_ids: list[int] | None = None) -> dict:
-    return await run_sync(ctx.conn, ctx.tg, chat_ids=chat_ids)
+    return await run_sync(
+        ctx.conn, ctx.tg, chat_ids=chat_ids,
+        max_backfill_days=getattr(ctx.settings, "max_backfill_days", None))
 
 async def get_summary_tool(ctx: AppContext, chat_id: int, date: str) -> dict | None:
     row = db.get_summary(ctx.conn, chat_id, date)
