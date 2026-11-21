@@ -1,0 +1,30 @@
+# Secrets / session
+.env
+.env.local
+*.session
+*.session-journal
+session.*
+~/.config/tg-mcp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# State
+*.sqlite
+*.sqlite3
+*.db
+.lock
+data/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
