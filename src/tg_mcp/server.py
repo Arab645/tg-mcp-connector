@@ -1,6 +1,6 @@
 # src/tg_mcp/server.py
 from __future__ import annotations
-import asyncio, json
+import asyncio, json, sys
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import (
@@ -79,11 +79,20 @@ def build_server(app: AppContext) -> Server:
 async def _amain():
     settings = load_settings()
     conn = db.connect(settings.tg_mcp_db_path); db.migrate(conn)
-    for cid in settings.watchlist_default:
-        db.upsert_chat(conn, cid, f"chat:{cid}", "group", True)
 
     async with TelethonTelegram(settings.tg_api_id, settings.tg_api_hash,
                                  settings.tg_session_path) as tg:
+        # list_chats also warms Telethon's entity cache for iter_messages.
+        known = {c["chat_id"]: c for c in await tg.list_chats()}
+        for cid in settings.watchlist_default:
+            if cid in known:
+                db.upsert_chat(conn, cid, known[cid]["title"], known[cid]["kind"], True)
+            elif conn.execute("SELECT 1 FROM chats WHERE chat_id=?", (cid,)).fetchone():
+                db.set_watched(conn, cid, True)  # keep stored title/kind
+            else:
+                print(f"tg-mcp: watchlist chat {cid} not found in dialogs; "
+                      "using placeholder title", file=sys.stderr)
+                db.upsert_chat(conn, cid, f"chat:{cid}", "group", True)
         notion = NotionSink(settings.notion_token, settings.notion_database_id)
         sched = None
         try:
