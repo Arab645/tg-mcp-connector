@@ -12,6 +12,7 @@ from .storage import db
 from .storage.notion import NotionSink
 from .telegram.client import TelethonTelegram
 from .summarize.claude import AnthropicClaude
+from .sync.scheduler import start_scheduler
 from .tools.handlers import (
     AppContext, list_chats_tool, fetch_messages_tool, send_message_tool,
     sync_now_tool, get_summary_tool, list_summaries_tool,
@@ -84,13 +85,17 @@ async def _amain():
     async with TelethonTelegram(settings.tg_api_id, settings.tg_api_hash,
                                  settings.tg_session_path) as tg:
         notion = NotionSink(settings.notion_token, settings.notion_database_id)
+        sched = None
         try:
             claude = AnthropicClaude(settings.anthropic_api_key, settings.summary_model)
             app = AppContext(conn=conn, tg=tg, claude=claude, notion=notion, settings=settings)
+            sched = start_scheduler(app)
             server = build_server(app)
             async with stdio_server() as (r, w):
                 await server.run(r, w, server.create_initialization_options())
         finally:
+            if sched is not None:
+                sched.shutdown(wait=False)
             await notion.close()
 
 def main():
