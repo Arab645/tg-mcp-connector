@@ -94,3 +94,26 @@ def record_run(conn, trigger) -> int:
 def finish_run(conn, run_id, stats_json, error) -> None:
     conn.execute("UPDATE runs SET finished_at=?, stats_json=?, error=? WHERE run_id=?",
                  (_now(), stats_json, error, run_id))
+
+
+def get_digest(conn, date):
+    return conn.execute("SELECT * FROM daily_digests WHERE date=?", (date,)).fetchone()
+
+def upsert_digest(conn, date, status, covered_hash, content_md, notion_page_id,
+                  model, tokens_in, tokens_out, error) -> None:
+    conn.execute(
+        """INSERT INTO daily_digests(date,status,covered_hash,content_md,notion_page_id,
+                                     model,tokens_in,tokens_out,error,updated_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?)
+           ON CONFLICT(date) DO UPDATE SET
+             status=excluded.status, covered_hash=excluded.covered_hash,
+             content_md=excluded.content_md, notion_page_id=excluded.notion_page_id,
+             model=excluded.model, tokens_in=excluded.tokens_in, tokens_out=excluded.tokens_out,
+             error=excluded.error, updated_at=excluded.updated_at""",
+        (date, status, covered_hash, content_md, notion_page_id,
+         model, tokens_in, tokens_out, error, _now()))
+
+def done_summaries_for_date(conn, date):
+    return conn.execute(
+        "SELECT * FROM summaries WHERE date=? AND status='done' ORDER BY chat_id",
+        (date,)).fetchall()

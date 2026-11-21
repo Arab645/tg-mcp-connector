@@ -86,3 +86,12 @@ async def get_status_tool(ctx: AppContext) -> dict:
         "cursors": cursors,
         "pending_summaries": [_row(r) for r in pending],
     }
+
+
+async def get_digest_tool(ctx, date: str):
+    row = db.get_digest(ctx.conn, date)
+    return _row(row) if row else None
+
+async def list_digests_tool(ctx, date_from: str, date_to: str):
+    q = "SELECT * FROM daily_digests WHERE date BETWEEN ? AND ? ORDER BY date DESC"
+    return [_row(r) for r in ctx.conn.execute(q, (date_from, date_to)).fetchall()]

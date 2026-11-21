@@ -14,7 +14,9 @@ async def tick(ctx, dates: list[str] | None = None) -> dict:
     sync_report = await run_sync(ctx.conn, ctx.tg, max_backfill_days=getattr(ctx.settings, "max_backfill_days", None))
     summaries = await run_pending_summaries(
         ctx.conn, ctx.claude, ctx.notion, ctx.settings.summary_model, dates)
-    return {"sync": sync_report, "summaries": summaries}
+    from ..summarize.digest import run_pending_digests
+    digests = await run_pending_digests(ctx.conn, ctx.claude, ctx.notion, ctx.settings.summary_model, dates)
+    return {"sync": sync_report, "summaries": summaries, "digests": digests}
 
 def start_scheduler(ctx) -> AsyncIOScheduler:
     sched = AsyncIOScheduler()

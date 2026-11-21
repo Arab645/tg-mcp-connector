@@ -27,4 +27,17 @@ CREATE TABLE IF NOT EXISTS runs (
   run_id INTEGER PRIMARY KEY AUTOINCREMENT,
   started_at TEXT NOT NULL, finished_at TEXT,
   trigger TEXT NOT NULL, stats_json TEXT, error TEXT);
+
+CREATE TABLE IF NOT EXISTS daily_digests (
+  date            TEXT PRIMARY KEY,
+  status          TEXT NOT NULL,
+  covered_hash    TEXT,
+  content_md      TEXT,
+  notion_page_id  TEXT,
+  model           TEXT,
+  tokens_in       INTEGER,
+  tokens_out      INTEGER,
+  error           TEXT,
+  updated_at      TEXT NOT NULL
+);
 """

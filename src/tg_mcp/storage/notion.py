@@ -37,6 +37,27 @@ def render_blocks(summary: dict, message_count: int) -> list[dict]:
         blocks.append(_para(", ".join(ps)))
     return blocks
 
+def _render_digest_blocks(content_md: str) -> list[dict]:
+    """Minimal Markdown → Notion blocks: ##/### headers, bullet lines, paragraphs."""
+    blocks = []
+    for raw in content_md.splitlines():
+        line = raw.rstrip()
+        if not line:
+            continue
+        if line.startswith("## "):
+            blocks.append({"object":"block","type":"heading_2",
+                "heading_2":{"rich_text":[{"type":"text","text":{"content": line[3:].strip()}}]}})
+        elif line.startswith("### "):
+            blocks.append({"object":"block","type":"heading_3",
+                "heading_3":{"rich_text":[{"type":"text","text":{"content": line[4:].strip()}}]}})
+        elif line.startswith("- "):
+            blocks.append({"object":"block","type":"bulleted_list_item",
+                "bulleted_list_item":{"rich_text":[{"type":"text","text":{"content": line[2:].strip()[:1900]}}]}})
+        else:
+            blocks.append({"object":"block","type":"paragraph",
+                "paragraph":{"rich_text":[{"type":"text","text":{"content": line[:1900]}}]}})
+    return blocks
+
 class NotionSink:
     def __init__(self, token: str, database_id: str, http: httpx.AsyncClient | None = None):
         self._db = database_id
@@ -92,5 +113,32 @@ class NotionSink:
         r = await self._http.post("/v1/pages", headers=self._headers,
                                    json={"parent":{"database_id": self._db},
                                          "properties": props, "children": blocks})
+        r.raise_for_status()
+        return r.json()["id"]
+
+    async def upsert_digest_page(self, date, content_md, chat_count, total_messages) -> str:
+        """Upsert a digest page keyed by `digest:{date}` on property Key."""
+        key = f"digest:{date}"
+        title = f"Daily digest — {date}"
+        blocks = _render_digest_blocks(content_md)
+        props = {
+            "Name":{"title":[{"text":{"content": title}}]},
+            "Key":{"rich_text":[{"text":{"content": key}}]},
+            "Date":{"date":{"start": date}},
+            "ChatId":{"number": 0},  # 0 == digest sentinel
+            "MessageCount":{"number": total_messages},
+        }
+        existing = await self._find_page(key)
+        if existing:
+            r = await self._http.patch(f"/v1/pages/{existing}",
+                headers=self._headers, json={"properties": props})
+            r.raise_for_status()
+            await self._clear_children(existing)
+            r = await self._http.patch(f"/v1/blocks/{existing}/children",
+                headers=self._headers, json={"children": blocks})
+            r.raise_for_status()
+            return existing
+        r = await self._http.post("/v1/pages", headers=self._headers,
+            json={"parent":{"database_id": self._db}, "properties": props, "children": blocks})
         r.raise_for_status()
         return r.json()["id"]

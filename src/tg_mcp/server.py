@@ -16,6 +16,7 @@ from .sync.scheduler import start_scheduler
 from .tools.handlers import (
     AppContext, list_chats_tool, fetch_messages_tool, send_message_tool,
     sync_now_tool, get_summary_tool, list_summaries_tool,
+    get_digest_tool, list_digests_tool,
     set_watchlist_tool, get_status_tool,
 )
 
@@ -41,6 +42,12 @@ TOOL_DEFS = [
          inputSchema={"type":"object","required":["date_from","date_to"],"properties":{
              "date_from":{"type":"string"}, "date_to":{"type":"string"},
              "chat_ids":{"type":["array","null"],"items":{"type":"integer"}}}}),
+    Tool(name="get_digest", description="Get the cross-chat daily digest for a date",
+         inputSchema={"type":"object","required":["date"],"properties":{
+             "date":{"type":"string"}}}),
+    Tool(name="list_digests", description="List daily digests in a date range",
+         inputSchema={"type":"object","required":["date_from","date_to"],"properties":{
+             "date_from":{"type":"string"}, "date_to":{"type":"string"}}}),
     Tool(name="set_watchlist", description="Replace/add/remove watched chats",
          inputSchema={"type":"object","required":["chat_ids"],"properties":{
              "chat_ids":{"type":"array","items":{"type":"integer"}},
@@ -53,6 +60,7 @@ HANDLERS = {
     "list_chats": list_chats_tool, "fetch_messages": fetch_messages_tool,
     "send_message": send_message_tool, "sync_now": sync_now_tool,
     "get_summary": get_summary_tool, "list_summaries": list_summaries_tool,
+    "get_digest": get_digest_tool, "list_digests": list_digests_tool,
     "set_watchlist": set_watchlist_tool, "get_status": get_status_tool,
 }
 
