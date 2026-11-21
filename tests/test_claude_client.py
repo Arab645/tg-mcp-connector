@@ -20,3 +20,17 @@ async def test_fake_claude_returns_canned():
     out, tin, tout = await fake.summarize("Team","2026-11-21",[{"text":"x"}])
     assert out["topics"][0]["title"] == "t"
     assert tin > 0 and tout > 0
+
+async def test_anthropic_fallback_on_malformed_json():
+    from types import SimpleNamespace
+    from tg_mcp.summarize.claude import AnthropicClaude
+    ac = AnthropicClaude(api_key="test-key", model="claude-haiku-5-5")
+    async def fake_create(**kwargs):
+        return SimpleNamespace(
+            content=[SimpleNamespace(type="text", text='{"topics": [oops}')],
+            usage=SimpleNamespace(input_tokens=5, output_tokens=5))
+    ac._client.messages.create = fake_create
+    out, tin, tout = await ac.summarize("T", "2026-11-21", [])
+    assert out == {"topics":[], "decisions":[], "action_items":[],
+                   "open_questions":[], "links":[], "participants":[]}
+    assert isinstance(tin, int) and isinstance(tout, int)

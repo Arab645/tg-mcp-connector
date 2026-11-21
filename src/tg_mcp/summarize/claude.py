@@ -31,8 +31,11 @@ class AnthropicClaude:
             data = json.loads(text)
         except json.JSONDecodeError:
             start = text.find("{"); end = text.rfind("}")
-            data = json.loads(text[start:end+1]) if start >= 0 and end > start else {
-                "topics":[], "decisions":[], "action_items":[],
-                "open_questions":[], "links":[], "participants":[]}
+            empty = {"topics":[], "decisions":[], "action_items":[],
+                     "open_questions":[], "links":[], "participants":[]}
+            try:
+                data = json.loads(text[start:end+1]) if start >= 0 and end > start else empty
+            except json.JSONDecodeError:
+                data = empty
         u = resp.usage
         return data, int(u.input_tokens), int(u.output_tokens)
