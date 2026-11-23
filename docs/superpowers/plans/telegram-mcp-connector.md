@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python 3.11, Telethon, modelcontextprotocol python SDK (`mcp`), anthropic SDK, httpx (Notion), APScheduler, pydantic-settings, sqlite3 (stdlib) with WAL, pytest + pytest-asyncio.
 
-**Spec:** `docs/superpowers/specs/2026-11-21-telegram-mcp-connector-design.md`
+**Spec:** `docs/superpowers/specs/telegram-mcp-connector-design.md`
 
 ## Global Constraints
 

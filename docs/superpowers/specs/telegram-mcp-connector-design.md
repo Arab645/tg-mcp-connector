@@ -1,7 +1,6 @@
 # Telegram MCP Connector — Design Spec
 
 **Status:** Draft for review
-**Date:** 2026-11-21
 **Owner:** test task for HOLYWATER TECH
 
 ## 1. Problem
@@ -220,7 +219,7 @@ tg-mcp-connector/
 │   ├── test_summary_idempotency.py
 │   └── fixtures/
 ├── docs/
-│   └── superpowers/specs/2026-11-21-telegram-mcp-connector-design.md
+│   └── superpowers/specs/telegram-mcp-connector-design.md
 ├── scripts/
 │   └── demo.sh
 ├── .env.example
